@@ -62,3 +62,30 @@ Berdasarkan `panduanFDA.pdf` ("...uraian evaluasi dari hasil yang telah dicapai,
 * Paragraf yang merangkum semua temuan evaluasi.
 * Simpulkan bahwa model Random Forest, setelah melalui persiapan data yang tepat (termasuk SMOTE), terbukti **efektif** (tidak hanya akurat) dalam memprediksi hujan.
 * Menyatakan bahwa tujuan penelitian telah tercapai, dan wawasan utama akan dirangkum dalam Bab 6 (Kesimpulan).
+
+
+
+
+
+
+
+
+BAB 5: EVALUASI
+
+5.1 Hasil Evaluasi Model
+   - Confusion Matrix dan interpretasi
+   - Classification Report (Precision, Recall, F1-Score)
+   - Accuracy Score
+
+5.2 Analisis Performa Model
+   - Pembahasan kualitas prediksi per kelas
+   - Trade-off Precision vs Recall
+   - Analisis kesalahan prediksi (FP dan FN)
+
+5.3 Feature Importance
+   - Visualisasi fitur paling berpengaruh
+   - Interpretasi hasil feature importance
+
+5.4 Kelebihan dan Keterbatasan Model
+   - Kekuatan model yang dibangun
+   - Limitasi dan area improvement
