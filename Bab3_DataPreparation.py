@@ -58,6 +58,11 @@ for col in categorical_columns:
     label_encoders[col] = le
     print(f"Encoded {col}: {len(le.classes_)} unique values")
 
+# Save label encoders for later use
+import joblib
+joblib.dump(label_encoders, 'label_encoders.pkl')
+print("Saved 'label_encoders.pkl' for prediction simulator.")
+
 # 3.4 Target Variable Encoding
 # RainTomorrow is already encoded in the loop above if it was object type.
 # Let's verify mapping.

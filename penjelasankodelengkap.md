@@ -82,6 +82,23 @@ sns.heatmap(data.corr(), annot=True, ...)
 - Sintaks: data.corr() menghitung koefisien korelasi (biasanya Pearson). sns.heatmap kemudian memetakan nilai-nilai ini ke dalam spektrum warna.
 - Temuan: Ditemukan korelasi positif yang kuat antara variabel target 'HujanBesok' dengan fitur-fitur seperti 'SinarMatahari' (korelasi negatif) dan 'KelembabanJam3' (korelasi positif), yang mengindikasikan fitur-fitur ini akan menjadi prediktor yang baik.
 
+d. Korelasi dengan Target (HujanBesok)
+
+le = LabelEncoder()
+data['HujanBesok_encoded'] = le.fit_transform(data['HujanBesok'])
+
+# Calculate correlation for numeric columns including the encoded target variable
+
+corr_with_target = data.corr(numeric_only=True)['HujanBesok_encoded'].sort_values(ascending=False)
+
+Penjelasan Detail:
+
+- LabelEncoder: Kita menginisialisasi objek LabelEncoder. Tujuannya adalah untuk mengubah variabel target 'HujanBesok' yang berisi teks ('Yes', 'No') menjadi format numerik (1, 0). Hal ini diperlukan karena perhitungan korelasi matematis hanya dapat dilakukan pada data angka.
+- fit_transform: Metode ini mempelajari label unik pada kolom 'HujanBesok' dan secara langsung mengubahnya menjadi angka. Hasilnya disimpan dalam kolom sementara baru bernama 'HujanBesok_encoded'.
+- data.corr(numeric_only=True): Kita menghitung matriks korelasi Pearson untuk seluruh DataFrame, namun dibatasi hanya pada kolom-kolom numerik saja (numeric_only=True) untuk menghindari error pada kolom teks.
+- ['HujanBesok_encoded']: Dari matriks korelasi yang besar tersebut, kita melakukan slicing (pemotongan) untuk hanya mengambil nilai korelasi antara semua fitur terhadap variabel target 'HujanBesok_encoded'.
+- sort_values(ascending=False): Hasil korelasi kemudian diurutkan dari nilai terbesar (positif terkuat) ke terkecil. Ini memudahkan kita untuk segera mengidentifikasi fitur mana yang memiliki hubungan linear paling kuat dengan kejadian hujan.
+
 ---
 
 BAB 3: DATA PREPARATION
@@ -238,71 +255,337 @@ Kesimpulan:
 
 ---
 
-# PENJELASAN MENDALAM BAB 5: EVALUASI MODEL (SUMMARY)
+PENJELASAN MENDALAM BAB 5: EVALUASI MODEL (SUMMARY)
 
-Bagian ini dirancang khusus untuk menjawab pertanyaan: **"Kode ini sebenarnya untuk apa?"** pada setiap langkah di Bab 5.
+Bagian ini dirancang khusus untuk menjawab pertanyaan: "Kode ini sebenarnya untuk apa?" pada setiap langkah di Bab 5.
 
-1. Memuat Data Uji & Model
+1. Memuat Data & Melatih Ulang Model (Khusus di Notebook)
+
+Kode:
+
+# Load Test Data
 
 test_data = pd.read_csv('X_test.csv')
-model = joblib.load('random_forest_model.pkl')
+X_test = test_data.drop('HujanBesok', axis=1)
+y_test = test_data['HujanBesok']
 
-Penjelasan Detail:
+# Load Train Data (SMOTE) & Retrain
 
-- Tujuan: Ibarat seorang siswa yang sudah selesai belajar (training), sekarang saatnya **ujian**.
-- X_test.csv: Adalah "soal ujian" yang belum pernah dilihat model sebelumnya. Kita menggunakan data asli (bukan SMOTE) agar ujiannya jujur sesuai kondisi lapangan.
-- joblib.load: Memanggil kembali "otak" model yang sudah kita latih dan simpan sebelumnya di Bab 4.
+train_data = pd.read_csv('X_train_smote.csv')
+X_train_smote = train_data.drop('HujanBesok', axis=1)
+y_train_smote = train_data['HujanBesok']
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train_smote, y_train_smote)
+
+Tujuannya Apa?
+Di dalam Notebook ini, kita melakukan pelatihan ulang (retraining) model sebelum evaluasi.
+
+- Kenapa dilatih ulang? Karena di notebook ini kita tidak menyimpan model ke file (.pkl) di Bab 4. Jadi, agar kita punya model untuk diuji di Bab 5, kita harus melatihnya lagi menggunakan data X_train_smote.csv yang sudah disiapkan di Bab 3.
+- X_test: Ini adalah "soal ujian" (data asli) untuk menguji model.
+- model.fit: Proses model "belajar" kembali pola hujan dari data latih.
 
 2. Melakukan Prediksi
 
+Kode:
+
 y_pred = model.predict(X_test)
 
-Penjelasan Detail:
+Tujuannya Apa?
+Ini adalah momen menjawab soal.
 
-- Tujuan: Ini adalah momen **menjawab soal**.
-- Proses: Model melihat data cuaca (suhu, angin, kelembaban, dll) di `X_test` dan mencoba menebak: "Besok Hujan (1)" atau "Tidak Hujan (0)".
-- y_pred: Hasil tebakannya disimpan dalam variabel ini.
+- model.predict: Model menggunakan "pengetahuan" yang sudah dipelajari untuk memprediksi label kelas (Hujan/Tidak Hujan) pada data uji X_test.
+- y_pred: Hasil tebakannya disimpan dalam variabel ini. Array ini berisi deretan angka 0 dan 1 yang merupakan prediksi model untuk setiap baris data di X_test.
 
 3. Cek Akurasi (Accuracy Score)
 
+Kode:
+
 accuracy = accuracy_score(y_test, y_pred)
+print(f"Skor Akurasi: {accuracy:.4f}")
 
-Penjelasan Detail:
+Tujuannya Apa?
+Ini adalah nilai rapor umum.
 
-- Tujuan: Ini adalah **nilai rapor umum**.
-- Fungsi: Menghitung berapa persen tebakan model yang benar secara keseluruhan.
-- Catatan Penting: Di proyek ini, akurasi tinggi (misal 85%) bisa menipu karena data kita tidak seimbang. Jadi ini hanya gambaran kasar.
+- accuracy_score: Fungsi ini membandingkan jawaban model (y_pred) dengan kunci jawaban asli (y_test).
+- Interpretasi: Menghitung berapa persen tebakan model yang benar secara keseluruhan.
+- Catatan Penting: Di proyek ini, akurasi tinggi (misal 85%) bisa menipu karena data kita tidak seimbang (imbalance). Jadi ini hanya gambaran kasar dan bukan satu-satunya penentu keberhasilan.
 
 4. Confusion Matrix
 
+Kode:
+
 cm = confusion_matrix(y_test, y_pred)
-sns.heatmap(cm, ...)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ...)
 
-Penjelasan Detail:
+Tujuannya Apa?
+Ini adalah bedah jawaban salah/benar. Kita ingin tahu detail kesalahan model:
 
-- Tujuan: Ini adalah **bedah jawaban salah/benar**. Kita ingin tahu detailnya.
-- True Positive: Berapa kali model benar menebak Hujan?
-- False Positive: Berapa kali model **salah** menebak Hujan padahal tidak? ("Alarm Palsu")
-- False Negative: Berapa kali model **gagal** mendeteksi Hujan padahal kejadian? ("Bahaya, kebasahan")
+- True Positive (TP): Model benar menebak "Hujan". (Bagus)
+- True Negative (TN): Model benar menebak "Tidak Hujan". (Bagus)
+- False Positive (FP): Model menebak "Hujan", padahal aslinya "Tidak Hujan". (Disebut juga Type I Error atau Alarm Palsu).
+- False Negative (FN): Model menebak "Tidak Hujan", padahal aslinya "Hujan". (Disebut juga Type II Error). Ini berbahaya karena orang jadi tidak bawa payung saat hujan.
 
 5. Classification Report
 
-print(classification_report(y_test, y_pred, ...))
+Kode:
 
-Penjelasan Detail:
+print(classification_report(y_test, y_pred, target_names=['Tidak Hujan', 'Hujan']))
 
-- Tujuan: Ini adalah **analisis mendalam per kelas**. Karena kita sangat peduli dengan kejadian "Hujan" (yang jarang terjadi), kita butuh metrik khusus.
-- Precision: Seberapa bisa dipercaya saat model bilang "Hujan"?
-- Recall: Seberapa peka model mendeteksi "Hujan"?
-- F1-Score: Nilai gabungan untuk melihat keseimbangan performa model.
+Tujuannya Apa?
+Ini adalah analisis mendalam per kelas. Karena kita sangat peduli dengan kejadian "Hujan" (yang jarang terjadi), kita butuh metrik khusus:
+
+- Precision: "Dari semua yang dibilang Hujan oleh model, berapa persen yang beneran Hujan?" (Fokus pada ketepatan prediksi positif).
+- Recall: "Dari semua kejadian Hujan yang sebenarnya, berapa persen yang berhasil dideteksi model?" (Fokus pada cakupan deteksi).
+- F1-Score: Nilai rata-rata harmonis antara Precision dan Recall. Ini adalah angka tunggal terbaik untuk menilai keseimbangan performa model pada data imbalance.
 
 6. Feature Importance
 
+Kode:
+
 feature*importances = model.feature_importances*
-plt.barh(...)
 
-Penjelasan Detail:
+# ... kode visualisasi bar chart ...
 
-- Tujuan: Ini menjawab pertanyaan **"Kenapa?"**.
-- Fungsi: Model memberi tahu kita faktor apa saja yang paling dia perhatikan saat membuat keputusan.
-- Temuan: Di proyek ini, model memberi tahu bahwa **Kecepatan Angin**, **Sinar Matahari**, dan **Kelembaban** adalah kunci utama penentu hujan. Ini membuktikan model kita logis secara ilmiah.
+Tujuannya Apa?
+Ini menjawab pertanyaan "Kenapa model memprediksi seperti itu?".
+
+- feature*importances*: Atribut ini berisi skor untuk setiap fitur (kolom) yang menunjukkan seberapa besar kontribusinya dalam membuat keputusan di pohon-pohon Random Forest.
+- Temuan: Di proyek ini, model memberi tahu bahwa Kecepatan Angin (WindGustSpeed), Sinar Matahari (Sunshine), dan Kelembaban (Humidity) adalah kunci utama penentu hujan. Ini membuktikan model kita logis secara ilmiah (meteorologis).
+
+---
+
+BAB 5 (LANJUTAN): ANALISIS KODE SPESIFIK & INTERPRETASI AKURASI
+
+Bagian ini memberikan penjelasan baris demi baris untuk blok kode evaluasi dan analisis awal yang krusial.
+
+1. Memuat Dataset Uji & Model
+
+```python
+# Load the test dataset
+print("Loading prepared datasets...")
+test_data = pd.read_csv('X_test.csv')
+X_test = test_data.drop('HujanBesok', axis=1)
+y_test = test_data['HujanBesok']
+```
+
+**Penjelasan:**
+
+- Kode ini memuat **Data Uji (Test Set)** yang telah dipisahkan di awal proyek.
+- `X_test`: Berisi fitur-fitur cuaca (Suhu, Angin, dll) yang akan digunakan untuk ujian.
+- `y_test`: Berisi kunci jawaban sebenarnya (Hujan/Tidak) untuk menilai apakah prediksi model benar.
+
+2. Melatih Ulang Model (Retraining Strategy)
+
+```python
+# Load the trained model from Bab 4
+print("Loading trained model...")
+# Since we don't have a saved model file...
+train_data = pd.read_csv('X_train_smote.csv')
+X_train_smote = train_data.drop('HujanBesok', axis=1)
+y_train_smote = train_data['HujanBesok']
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train_smote, y_train_smote)
+```
+
+**Penjelasan:**
+
+- **Kenapa dilatih ulang?** Dalam skenario notebook ini, kita tidak memuat file model yang sudah jadi (seperti `.pkl`). Sebagai gantinya, kita memuat kembali data latih SMOTE (`X_train_smote`) dan melatih model `RandomForestClassifier` dari awal.
+- **Tujuannya:** Memastikan kita memiliki objek `model` yang sudah "pintar" (sudah mempelajari pola dari data SMOTE) dan siap untuk diuji.
+
+3. Prediksi & Cek Distribusi
+
+```python
+y_pred = model.predict(X_test)
+print(f"Jumlah prediksi: {len(y_pred)}")
+print(f"Distribusi prediksi: {pd.Series(y_pred).value_counts().to_dict()}")
+```
+
+**Penjelasan:**
+
+- `model.predict`: Model memprediksi label (0 atau 1) untuk seluruh data uji.
+- `value_counts()`: Kita menghitung berapa kali model memprediksi "Tidak Hujan" dan "Hujan". Ini langkah **Sanity Check** untuk memastikan model tidak hanya memprediksi satu kelas saja (misal: memprediksi "Tidak Hujan" untuk semua data).
+
+4. Akurasi & Analisis Kritis (The Accuracy Paradox)
+
+```python
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Skor Akurasi: {accuracy:.4f}")
+
+# Analysis
+print("\n**Analisis Awal:**")
+print(f"Model mencapai akurasi {accuracy:.2%}, yang terdengar cukup tinggi.")
+print("Namun, akurasi bisa menyesatkan. Karena data kita tidak seimbang...")
+```
+
+**Penjelasan Mendalam:**
+
+- Bagian ini adalah **inti dari pemahaman evaluasi**.
+- Kode mencetak akurasi (misal 84%), tetapi langsung memberikan peringatan ("Analisis Awal").
+- **Masalah:** Data kita _Imbalanced_ (78% Tidak Hujan vs 22% Hujan).
+- **Logika:** Jika Anda menebak "Tidak Hujan" terus-menerus tanpa mikir, Anda akan benar 78% dari waktu. Jadi, akurasi 78% itu adalah _baseline_ (standar minimal), bukan prestasi.
+- **Pesan Moral:** Jangan terkecoh dengan angka akurasi yang tinggi. Kita harus melihat metrik lain (Precision, Recall, F1-Score) untuk memastikan model benar-benar bisa mendeteksi "Hujan" (kelas minoritas), bukan hanya pintar menebak "Tidak Hujan".
+
+---
+
+# PENJELASAN DETAIL KODE BAB 5: EVALUASI (5.1 - 5.4)
+
+Berikut adalah penjelasan mendalam untuk setiap blok kode pada Bab 5, mulai dari perhitungan akurasi hingga analisis fitur penting.
+
+## 5.1 Skor Akurasi (Accuracy Score)
+
+**Kode:**
+
+```python
+# Load test data
+test_data = pd.read_csv('X_test.csv')
+X_test = test_data.drop('HujanBesok', axis=1)
+y_test = test_data['HujanBesok']
+
+# Load train data (SMOTE) & Retrain Model
+train_data = pd.read_csv('X_train_smote.csv')
+X_train_smote = train_data.drop('HujanBesok', axis=1)
+y_train_smote = train_data['HujanBesok']
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train_smote, y_train_smote)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Calculate Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Skor Akurasi: {accuracy:.4f}")
+```
+
+**Penjelasan Teknis & Alur Logika:**
+
+1.  **Memuat Data Uji (`X_test`, `y_test`):**
+
+    - Kita memuat file `X_test.csv` yang berisi data **asli** (tanpa SMOTE).
+    - **Penting:** Evaluasi wajib menggunakan data asli yang tidak seimbang (imbalanced) untuk mensimulasikan kondisi dunia nyata.
+
+2.  **Melatih Ulang Model (`model.fit`):**
+
+    - Kita memuat `X_train_smote.csv` (data hasil oversampling).
+    - Kita melatih `RandomForestClassifier` menggunakan data SMOTE ini.
+    - **Kenapa ada SMOTE di sini?** Karena ini tahap **Training (Belajar)**. Kita ingin model belajar dari data yang seimbang agar tidak bias ke kelas mayoritas ("Tidak Hujan").
+
+3.  **Prediksi (`y_pred`):**
+
+    - Model yang sudah "pintar" (dilatih dengan SMOTE) sekarang diuji mengerjakan soal ujian (`X_test`).
+    - Hasil tebakannya disimpan di `y_pred`.
+
+4.  **Akurasi (`accuracy_score`):**
+    - Fungsi ini menghitung: `(Jumlah Tebakan Benar) / (Total Soal)`.
+    - **Interpretasi:** Jika hasilnya 0.85 (85%), artinya 85 dari 100 tebakan model benar.
+    - **Peringatan:** Pada data cuaca yang jarang hujan, akurasi tinggi bisa menipu. Model yang malas dan selalu menebak "Tidak Hujan" pun bisa dapat akurasi tinggi. Makanya kita butuh Bab 5.2 dan 5.3.
+
+## 5.2 Confusion Matrix
+
+**Kode:**
+
+```python
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Tidak Hujan', 'Hujan'], yticklabels=['Tidak Hujan', 'Hujan'])
+```
+
+**Penjelasan Teknis:**
+
+1.  **`confusion_matrix`:** Fungsi ini membedah hasil prediksi menjadi 4 kategori detail:
+
+    - **True Negative (TN):** Pojok Kiri Atas. Model bilang "Tidak", Data asli "Tidak". (Prediksi Benar).
+    - **False Positive (FP):** Pojok Kanan Atas. Model bilang "Hujan", Data asli "Tidak". (Salah: Alarm Palsu).
+    - **False Negative (FN):** Pojok Kiri Bawah. Model bilang "Tidak", Data asli "Hujan". (Salah: Gagal Mendeteksi).
+    - **True Positive (TP):** Pojok Kanan Bawah. Model bilang "Hujan", Data asli "Hujan". (Prediksi Benar).
+
+2.  **`sns.heatmap`:**
+    - Membuat visualisasi kotak warna-warni.
+    - `annot=True`: Menampilkan angkanya di dalam kotak.
+    - `fmt='d'`: Memastikan angka ditampilkan sebagai bilangan bulat (integer), bukan desimal.
+    - **Tujuan:** Memudahkan kita melihat di mana model paling sering salah. Apakah sering "PHP" (False Positive) atau sering "Kecolongan" (False Negative)?
+
+## 5.3 Laporan Klasifikasi (Classification Report)
+
+**Kode:**
+
+```python
+print(classification_report(y_test, y_pred, target_names=['Tidak Hujan', 'Hujan']))
+```
+
+**Penjelasan Teknis:**
+
+Fungsi ini menghitung metrik kualitas untuk **setiap kelas** secara terpisah. Fokus utama kita biasanya pada kelas **'Hujan'** (kelas minoritas).
+
+1.  **Precision (Ketepatan):**
+
+    - Rumus: `TP / (TP + FP)`
+    - **Arti:** "Saat model teriak 'HUJAN!', seberapa sering dia benar?"
+    - Jika Precision rendah, berarti model sering "bawel" (banyak alarm palsu).
+
+2.  **Recall (Sensitivitas):**
+
+    - Rumus: `TP / (TP + FN)`
+    - **Arti:** "Dari seluruh kejadian hujan yang benar-benar terjadi hari ini, berapa persen yang berhasil dideteksi model?"
+    - Jika Recall rendah, berarti model sering melewatkan hujan (kita jadi kehujanan karena tidak bawa payung).
+
+3.  **F1-Score:**
+    - Rumus: `2 * (Precision * Recall) / (Precision + Recall)`
+    - **Arti:** Nilai tengah (rata-rata harmonis) antara Precision dan Recall.
+    - Ini adalah **Satu Angka Terpenting** untuk menilai model pada data imbalance. F1-Score yang tinggi menandakan model yang seimbang: cukup tepat dan cukup peka.
+
+## 5.4 Identifikasi Fitur Penting (Feature Importance)
+
+**Kode:**
+
+```python
+feature_importances = model.feature_importances_
+# ... (kode visualisasi bar chart) ...
+```
+
+**Penjelasan Teknis:**
+
+1.  **`model.feature_importances_`:**
+
+    - Ini adalah atribut spesial milik Random Forest.
+    - Saat membuat ribuan pohon keputusan, algoritma mencatat fitur (kolom) mana yang paling sering dipakai untuk memisahkan data "Hujan" dan "Tidak Hujan" dengan bersih.
+    - Semakin sering dan efektif sebuah fitur dipakai, semakin tinggi skornya.
+
+2.  **Visualisasi Bar Chart:**
+    - Kita mengurutkan skor tersebut dari terbesar ke terkecil.
+    - **Tujuan:** Memverifikasi logika model.
+    - **Contoh:** Jika fitur teratas adalah `Cloud3pm` (Awan jam 3 sore) dan `Humidity3pm` (Kelembaban), itu masuk akal secara ilmu cuaca. Jika fitur teratas aneh (misalnya `Date`), berarti model kita mungkin salah belajar (overfitting).
+
+---
+
+# PERTANYAAN DOSEN LANJUTAN (FEATURE ENGINEERING)
+
+Bagian ini khusus membahas keputusan teknis kenapa memilih metode tertentu (Label Encoder) dibandingkan metode lain (One-Hot, PCA, Feature Selection).
+
+## Q: Mengapa Anda menggunakan Label Encoder untuk data Kategori (seperti Lokasi)? Bukankah secara teori harusnya One-Hot Encoder?
+
+**A (Jawaban Cerdas):**
+"Betul Pak/Bu, secara teori statistik untuk data nominal harusnya One-Hot Encoder. Namun, saya memilih **Label Encoder** karena pertimbangan **Efisiensi Engineering** khusus untuk algoritma **Random Forest**:
+
+1.  **Menghindari Ledakan Dimensi:** Fitur `Lokasi` memiliki 49 kota unik. Jika saya pakai One-Hot, feature kita akan meledak bertambah ~50 kolom baru yang isinya kebanyakan angka nol (sparse). Ini akan sangat memperberat komputasi tanpa memberikan gain yang signifikan.
+2.  **Kecocokan Model:** Random Forest adalah algoritma berbasis Tree. Dia bekerja dengan mencari _threshold_ (titik potong), bukan perkalian bobot seperti Regresi Linear. Jadi, Random Forest cukup pintar untuk memisahkan kategori yang diberi label angka (0-48) tanpa terjebak asumsi bahwa 'Kota 48' lebih besar nilainya dari 'Kota 0'."
+
+**A (Jawaban Sederhana):**
+"Karena data Lokasi variasinya terlalu banyak (49 kota). Kalau dipecah satu-satu (One-Hot), data jadi terlalu gemuk dan bikin komputer lambat. Random Forest sudah cukup pintar untuk membaca kode angka sederhana, jadi Label Encoder adalah solusi paling efisien."
+
+## Q: Kenapa Anda tidak membuang kolom yang tidak perlu di awal (Feature Selection)? Kenapa dimasukkan semua?
+
+**A (Jawaban Strategis):**
+"Saya sengaja memasukkan semua fitur karena saya ingin **Menghindari Bias Pribadi**.
+
+1.  **Let Data Speak:** Saya tidak ingin sok tahu membuang data (misal data kota kecil) yang mungkin ternyata punya pola cuaca unik.
+2.  **Embedded Feature Selection:** Kelebihan utama Random Forest adalah dia punya kemampuan seleksi fitur otomatis di dalamnya. Saat training, model akan otomatis mengabaikan kolom yang tidak berguna dan memberikan skor tinggi pada kolom penting (seperti yang kita lihat di Feature Importance Bab 5). Jadi, memasukkan semua fitur justru cara paling aman untuk memastikan tidak ada informasi penting yang terbuang."
+
+## Q: Kenapa tidak dikurangi saja dimensinya pakai PCA (Dimensionality Reduction)?
+
+**A (Jawaban Mematikan):**
+"Saya tidak menggunakan PCA karena alasan **Interpretabilitas (Kemudahan Penjelasan)**.
+
+1.  **Data Analyst butuh Insight:** Tujuan saya bukan cuma prediksi, tapi juga paham penyebab hujan. Jika saya pakai PCA, fitur 'Angin' dan 'Lokasi' akan lebur jadi variabel abstrak 'PC1' atau 'PC2' yang tidak bisa dijelaskan artinya.
+2.  **Efisiensi Label Encoder:** Sebenarnya, dengan saya memilih Label Encoder (mengubah 49 potensi kolom menjadi 1 kolom angka), saya **sudah melakukan reduksi dimensi** dengan cara yang paling efektif dan tetap bisa dibaca manusia."
