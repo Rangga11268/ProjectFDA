@@ -119,6 +119,88 @@ def batch_simulation(model, X_test_real, feature_columns, n_samples=10):
     print(f"Akurasi pada batch ini: {accuracy:.2f}% ({correct_count}/{n_samples})")
     return results
 
+def generate_synthetic_data(X_real, n_synthetic=10000):
+    """
+    Membuat data sintetik dengan menambahkan sedikit noise pada data asli.
+    Ini mensimulasikan variasi data di dunia nyata.
+    """
+    print(f"\n[INFO] Men-generate {n_synthetic} data sintetik dari data asli...")
+    
+    # Ambil sampel acak dari data asli sebagai basis
+    base_data = X_real.sample(n=n_synthetic, replace=True)
+    
+    X_synthetic = base_data.drop('HujanBesok', axis=1).copy()
+    y_synthetic = base_data['HujanBesok'].copy() # Asumsi label tetap sama untuk perubahan kecil
+    
+    # Tambahkan noise gaussian ke kolom numerik
+    # Kita perlu tahu kolom mana yang numerik. 
+    # Sederhananya, kolom dengan banyak unique values biasanya numerik.
+    # Atau kita iterate semua dan try-except.
+    
+    noise_level = 0.05 # 5% variasi
+    
+    for col in X_synthetic.columns:
+        # Cek jika kolom numerik (float/int) dan bukan hasil encoding kategori (biasanya integer kecil)
+        # Cara kasar: jika unique values > 20, anggap continue/numerik yang bisa di-noise
+        if X_synthetic[col].nunique() > 20: 
+            sigma = X_synthetic[col].std() * noise_level
+            noise = np.random.normal(0, sigma, X_synthetic.shape[0])
+            X_synthetic[col] = X_synthetic[col] + noise
+            
+    return X_synthetic, y_synthetic
+
+def augmentation_stress_test(model, X_test_real):
+    print("\n==================================================")
+    print("   STRESS TEST: DATA AUGMENTATION (REAL + SYNTHETIC)")
+    print("==================================================")
+    print("Skenario: Menambahkan 10.000 data baru (sintetik) ke data test asli.")
+    print("Tujuannya: Menguji apakah model tetap konsisten saat menghadapi variasi data.")
+    
+    # 1. Data Asli
+    X_real = X_test_real.drop('HujanBesok', axis=1)
+    y_real = X_test_real['HujanBesok']
+    n_real = len(X_real)
+    
+    # 2. Generate Data Sintetik
+    X_syn, y_syn = generate_synthetic_data(X_test_real, n_synthetic=10000)
+    n_syn = len(X_syn)
+    
+    print(f"\nJumlah Data Asli    : {n_real:,}")
+    print(f"Jumlah Data Tambahan: {n_syn:,}")
+    print(f"TOTAL DATA PENGUJIAN: {n_real + n_syn:,}")
+    
+    print("\nMelakukan Prediksi pada Total Data (Mohon tunggu)...")
+    
+    # Gabungkan
+    X_total = pd.concat([X_real, X_syn])
+    y_total = pd.concat([y_real, y_syn])
+    
+    # Prediksi
+    y_pred = model.predict(X_total)
+    
+    # Hitung Akurasi
+    from sklearn.metrics import accuracy_score
+    acc_total = accuracy_score(y_total, y_pred)
+    
+    # Akurasi per bagian
+    y_pred_real = model.predict(X_real)
+    acc_real = accuracy_score(y_real, y_pred_real)
+    
+    y_pred_syn = model.predict(X_syn)
+    acc_syn = accuracy_score(y_syn, y_pred_syn)
+    
+    print("\n--- HASIL PENGUJIAN ---")
+    print(f"Akurasi Data Asli ({n_real:,} data)      : {acc_real*100:.2f}%")
+    print(f"Akurasi Data Sintetik ({n_syn:,} data)  : {acc_syn*100:.2f}%")
+    print("-" * 50)
+    print(f"AKURASI TOTAL ({n_real + n_syn:,} data)     : {acc_total*100:.2f}%")
+    
+    if abs(acc_real - acc_syn) < 0.05:
+        print("\nKESIMPULAN: Model SANGAT ROBUST (Konsisten).")
+        print("Performa model stabil bahkan dengan adanya variasi data baru.")
+    else:
+        print("\nKESIMPULAN: Model Cukup Stabil (Ada sedikit penurunan/perubahan pada data baru).")
+
 def main():
     clear_screen()
     print("==================================================")
@@ -131,9 +213,11 @@ def main():
         print("\nMenu Utama:")
         print("1. Simulasi Satu Data (Input Manual)")
         print("2. Simulasi Banyak Data (Batch Test)")
-        print("3. Keluar")
+        print("3. Stress Test (10.000 Data Acak dari Test Set)")
+        print("4. Stress Test: DATA AUGMENTATION (+10.000 Data Baru)")
+        print("5. Keluar")
         
-        choice = input("Pilih menu (1/2/3): ").strip()
+        choice = input("Pilih menu (1-5): ").strip()
         
         if choice == '1':
             input_df = get_user_input(feature_columns, label_encoders)
@@ -157,8 +241,18 @@ def main():
                 print("Input jumlah harus angka.")
             
             input("\nTekan Enter untuk kembali ke menu...")
-            
+
         elif choice == '3':
+            print("\nMelakukan Stress Test dengan 10.000 data acak...")
+            print("Mohon tunggu sebentar, sedang memproses...")
+            batch_simulation(model, X_test_real, feature_columns, n_samples=10000)
+            input("\nStress Test Selesai. Tekan Enter untuk kembali ke menu...")
+            
+        elif choice == '4':
+            augmentation_stress_test(model, X_test_real)
+            input("\nTekan Enter untuk kembali ke menu...")
+            
+        elif choice == '5':
             print("Terima kasih telah menggunakan simulator.")
             break
         else:
