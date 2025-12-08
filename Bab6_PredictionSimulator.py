@@ -149,11 +149,11 @@ def generate_synthetic_data(X_real, n_synthetic=10000):
             
     return X_synthetic, y_synthetic
 
-def augmentation_stress_test(model, X_test_real):
+def augmentation_stress_test(model, X_test_real, n_synthetic=10000):
     print("\n==================================================")
-    print("   STRESS TEST: DATA AUGMENTATION (REAL + SYNTHETIC)")
+    print(f"   STRESS TEST: DATA AUGMENTATION ({n_synthetic:,} Data Baru)")
     print("==================================================")
-    print("Skenario: Menambahkan 10.000 data baru (sintetik) ke data test asli.")
+    print(f"Skenario: Menambahkan {n_synthetic:,} data baru (sintetik) ke data test asli.")
     print("Tujuannya: Menguji apakah model tetap konsisten saat menghadapi variasi data.")
     
     # 1. Data Asli
@@ -162,7 +162,7 @@ def augmentation_stress_test(model, X_test_real):
     n_real = len(X_real)
     
     # 2. Generate Data Sintetik
-    X_syn, y_syn = generate_synthetic_data(X_test_real, n_synthetic=10000)
+    X_syn, y_syn = generate_synthetic_data(X_test_real, n_synthetic=n_synthetic)
     n_syn = len(X_syn)
     
     print(f"\nJumlah Data Asli    : {n_real:,}")
@@ -213,11 +213,10 @@ def main():
         print("\nMenu Utama:")
         print("1. Simulasi Satu Data (Input Manual)")
         print("2. Simulasi Banyak Data (Batch Test)")
-        print("3. Stress Test (10.000 Data Acak dari Test Set)")
-        print("4. Stress Test: DATA AUGMENTATION (+10.000 Data Baru)")
-        print("5. Keluar")
+        print("3. Stress Test: DATA AUGMENTATION (Add 10k, 20k, 50k+ Data Baru)")
+        print("4. Keluar")
         
-        choice = input("Pilih menu (1-5): ").strip()
+        choice = input("Pilih menu (1-4): ").strip()
         
         if choice == '1':
             input_df = get_user_input(feature_columns, label_encoders)
@@ -243,16 +242,15 @@ def main():
             input("\nTekan Enter untuk kembali ke menu...")
 
         elif choice == '3':
-            print("\nMelakukan Stress Test dengan 10.000 data acak...")
-            print("Mohon tunggu sebentar, sedang memproses...")
-            batch_simulation(model, X_test_real, feature_columns, n_samples=10000)
-            input("\nStress Test Selesai. Tekan Enter untuk kembali ke menu...")
-            
-        elif choice == '4':
-            augmentation_stress_test(model, X_test_real)
+            try:
+                print("\nMasukkan jumlah data sintetik tambahan (Saran: 10000, 20000, 30000, 50000):")
+                n_syn = int(input("Jumlah data: "))
+                augmentation_stress_test(model, X_test_real, n_synthetic=n_syn)
+            except ValueError:
+                print("Input jumlah harus angka.")
             input("\nTekan Enter untuk kembali ke menu...")
             
-        elif choice == '5':
+        elif choice == '4':
             print("Terima kasih telah menggunakan simulator.")
             break
         else:
