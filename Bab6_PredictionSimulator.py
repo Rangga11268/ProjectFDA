@@ -66,6 +66,75 @@ def get_user_input(feature_columns, label_encoders):
     
     return pd.DataFrame([input_data])
 
+def simple_experiment_mode(model, feature_columns):
+    print("\n--- SIMULASI EKSPERIMEN (TOP 5 FITUR) ---")
+    print("Mode ini hanya meminta 5 fitur paling berpengaruh.")
+    print("Fitur lainnya akan diisi nilai rata-rata (default) dari dataset.")
+    
+    # Nilai Median dari X_test (dihitung sebelumnya)
+    defaults = {
+        "Lokasi": 24.0, "SuhuMin": 12.1, "SuhuMax": 22.7, "CurahHujan": 0.0, 
+        "Penguapan": 5.47, "SinarMatahari": 7.61, "ArahAnginKencang": 9.0, 
+        "KecepatanAnginKencang": 39.0, "ArahAnginJam9": 7.0, "ArahAnginJam3": 8.0, 
+        "KecepatanAnginJam9": 13.0, "KecepatanAnginJam3": 18.66, "KelembabanJam9": 70.0, 
+        "KelembabanJam3": 51.54, "TekananUdaraJam9": 1017.65, "TekananUdaraJam3": 1015.26, 
+        "AwanJam9": 4.45, "AwanJam3": 4.51, "SuhuJam9": 16.8, "SuhuJam3": 21.3, 
+        "HujanHariIni": 0.0, "Year": 2013.0, "Month": 6.0, "Day": 16.0
+    }
+
+    # Top 5 Features (Berdasarkan Feature Importance Bab 5)
+    # 1. WindGustSpeed (KecepatanAnginKencang)
+    # 2. Sunshine (SinarMatahari)
+    # 3. Cloud3pm (AwanJam3) - tapi di sini kita pakai Rainfall/Humidity juga penting
+    # User request context: Pola segini hujan atau tidak.
+    # Kita ambil 5 fitur yang paling make sense untuk diubah-ubah user:
+    # Humidity3pm, Sunshine, WindGustSpeed, Cloud3pm, Rainfall
+    
+    input_data = defaults.copy()
+    
+    print("\nSilakan masukkan nilai untuk variabel berikut:")
+    
+    try:
+        # 1. Kelembaban Jam 3 (Humidity3pm)
+        h3 = float(input("1. Kelembaban Jam 3 (0-100%): "))
+        input_data['KelembabanJam3'] = h3
+        
+        # 2. Sinar Matahari (Sunshine)
+        sun = float(input("2. Sinar Matahari (0-14 jam): "))
+        input_data['SinarMatahari'] = sun
+        
+        # 3. Kecepatan Angin Kencang (WindGustSpeed)
+        wind = float(input("3. Kecepatan Angin Kencang (km/h): "))
+        input_data['KecepatanAnginKencang'] = wind
+        
+        # 4. Awan Jam 3 (Cloud3pm)
+        cloud = float(input("4. Awan Jam 3 (0-8 oktas): "))
+        input_data['AwanJam3'] = cloud
+        
+        # 5. Curah Hujan Hari Ini (Rainfall)
+        rain = float(input("5. Curah Hujan (mm): "))
+        input_data['CurahHujan'] = rain
+        
+        # Buat DataFrame
+        # Pastikan urutan kolom sesuai feature_columns
+        ordered_data = {col: input_data.get(col, 0) for col in feature_columns}
+        input_df = pd.DataFrame([ordered_data])
+        
+        # Prediksi
+        print("\nMelakukan prediksi...")
+        pred = model.predict(input_df)[0]
+        prob = model.predict_proba(input_df)[0]
+        
+        hasil = "AKAN HUJAN" if pred == 1 else "TIDAK HUJAN"
+        chance = prob[1] * 100
+        
+        print(f"\n>>> HASIL PREDIKSI: {hasil}")
+        print(f">>> Probabilitas Hujan: {chance:.2f}%")
+        
+    except ValueError:
+        print("Input harus berupa angka.")
+
+
 def batch_simulation(model, X_test_real, feature_columns, n_samples=10):
     print(f"\n--- Memulai Simulasi Batch ({n_samples} Sampel) ---")
     
@@ -211,12 +280,13 @@ def main():
     
     while True:
         print("\nMenu Utama:")
-        print("1. Simulasi Satu Data (Input Manual)")
-        print("2. Simulasi Banyak Data (Batch Test)")
-        print("3. Stress Test: DATA AUGMENTATION (Add 10k, 20k, 50k+ Data Baru)")
-        print("4. Keluar")
+        print("1. Simulasi Satu Data (Input Manual Lengkap)")
+        print("2. Simulasi Eksperimen (Top 5 Fitur Utama)")
+        print("3. Simulasi Banyak Data (Batch Test)")
+        print("4. Stress Test: DATA AUGMENTATION (Add 10k, 20k, 50k+ Data Baru)")
+        print("5. Keluar")
         
-        choice = input("Pilih menu (1-4): ").strip()
+        choice = input("Pilih menu (1-5): ").strip()
         
         if choice == '1':
             input_df = get_user_input(feature_columns, label_encoders)
@@ -231,8 +301,12 @@ def main():
             print(f">>> Probabilitas Hujan: {chance:.2f}%")
             
             input("\nTekan Enter untuk kembali ke menu...")
-            
+        
         elif choice == '2':
+            simple_experiment_mode(model, feature_columns)
+            input("\nTekan Enter untuk kembali ke menu...")
+            
+        elif choice == '3':
             try:
                 n = int(input("Masukkan jumlah data dummy yang ingin dites (contoh: 10, 50, 100): "))
                 batch_simulation(model, X_test_real, feature_columns, n_samples=n)
@@ -241,7 +315,7 @@ def main():
             
             input("\nTekan Enter untuk kembali ke menu...")
 
-        elif choice == '3':
+        elif choice == '4':
             try:
                 print("\nMasukkan jumlah data sintetik tambahan (Saran: 10000, 20000, 30000, 50000):")
                 n_syn = int(input("Jumlah data: "))
@@ -250,7 +324,7 @@ def main():
                 print("Input jumlah harus angka.")
             input("\nTekan Enter untuk kembali ke menu...")
             
-        elif choice == '4':
+        elif choice == '5':
             print("Terima kasih telah menggunakan simulator.")
             break
         else:
