@@ -1,243 +1,190 @@
 /**
- * 🌧️ Prediksi Hujan Australia - Main JavaScript
+ * 🌧️ Weather Prediction AI - Client Logic
+ * Modern Clean Implementation
  */
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Elements
-  const form = document.getElementById("prediction-form");
-  const submitBtn = document.getElementById("submit-btn");
-  const resultSection = document.getElementById("result-section");
-  const resetBtn = document.getElementById("reset-btn");
-  const modeBtns = document.querySelectorAll(".mode-btn");
-  const simpleFields = document.querySelector(".simple-fields");
-  const advancedFields = document.querySelector(".advanced-fields");
-  const sliders = document.querySelectorAll(".slider");
-  const toggleInput = document.getElementById("hujan_hari_ini");
-  const toggleLabel = document.querySelector(".toggle-label");
+document.addEventListener("DOMContentLoaded", () => {
+  // === DOM Elements ===
+  const elements = {
+    form: document.getElementById("prediction-form"),
+    submitBtn: document.getElementById("submit-btn"),
+    resultSection: document.getElementById("result-section"),
+    resultText: document.getElementById("result-text"),
+    probText: document.getElementById("probability-text"),
+    probBar: document.getElementById("probability-bar"),
+    resetBtn: document.getElementById("reset-btn"),
+    modeBtns: document.querySelectorAll(".mode-btn"),
+    advancedFields: document.querySelector(".advanced-fields"),
+    simpleFields: document.querySelector(".simple-fields"),
 
-  // Mode Toggle
-  modeBtns.forEach((btn) => {
-    btn.addEventListener("click", function () {
-      modeBtns.forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
+    // Inputs & Value Displays
+    inputs: {
+      kelembaban_jam3: document.getElementById("kelembaban_jam3"),
+      sinar_matahari: document.getElementById("sinar_matahari"),
+      kecepatan_angin: document.getElementById("kecepatan_angin"),
+      tutupan_awan: document.getElementById("tutupan_awan"),
+      curah_hujan: document.getElementById("curah_hujan"),
+    },
+    displays: {
+      kelembaban: document.getElementById("val_kelembaban"),
+      sinar: document.getElementById("val_sinar"),
+      angin: document.getElementById("val_angin"),
+      awan: document.getElementById("val_awan"),
+      hujan: document.getElementById("val_hujan"),
+    },
+  };
 
-      const mode = this.dataset.mode;
-      if (mode === "advanced") {
-        advancedFields.classList.remove("hidden");
-      } else {
-        advancedFields.classList.add("hidden");
+  // === Event Listeners ===
+
+  // Slider Value Updates
+  Object.keys(elements.inputs).forEach((key) => {
+    elements.inputs[key].addEventListener("input", (e) => {
+      if (
+        elements.displays[
+          key
+            .replace("_jam3", "")
+            .replace("_matahari", "")
+            .replace("kecepatan_", "")
+            .replace("tutupan_", "")
+            .replace("curah_", "")
+        ]
+      ) {
+        // Try to match shorthand keys
+        const shortKey = key.split("_")[1] || key.split("_")[0]; // simple hack for mapping
+
+        // Better mapping
+        let displayEl;
+        if (key === "kelembaban_jam3") displayEl = elements.displays.kelembaban;
+        if (key === "sinar_matahari") displayEl = elements.displays.sinar;
+        if (key === "kecepatan_angin") displayEl = elements.displays.angin;
+        if (key === "tutupan_awan") displayEl = elements.displays.awan;
+        if (key === "curah_hujan") displayEl = elements.displays.hujan;
+
+        if (displayEl) displayEl.textContent = e.target.value;
       }
     });
   });
 
-  // Slider sync with input
-  sliders.forEach((slider) => {
-    const targetId = slider.dataset.target;
-    const targetInput = document.getElementById(targetId);
+  // Mode Switching
+  elements.modeBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
 
-    if (targetInput) {
-      // Sync slider to input
-      slider.addEventListener("input", function () {
-        targetInput.value = this.value;
+      // UI Toggle
+      elements.modeBtns.forEach((b) => {
+        b.classList.remove("bg-zinc-800", "text-white", "shadow-sm");
+        b.classList.add("text-zinc-400");
       });
+      btn.classList.add("bg-zinc-800", "text-white", "shadow-sm");
+      btn.classList.remove("text-zinc-400");
 
-      // Sync input to slider
-      targetInput.addEventListener("input", function () {
-        slider.value = this.value;
-      });
-    }
+      // Visibility
+      if (mode === "advanced") {
+        elements.advancedFields.classList.remove("hidden");
+      } else {
+        elements.advancedFields.classList.add("hidden");
+      }
+    });
   });
 
-  // Toggle label update
-  if (toggleInput && toggleLabel) {
-    toggleInput.addEventListener("change", function () {
-      toggleLabel.textContent = this.checked ? "Ya" : "Tidak";
-    });
-  }
-
-  // Form Submit
-  form.addEventListener("submit", async function (e) {
+  // Form Submission
+  elements.form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Show loading state
-    submitBtn.classList.add("loading");
-    submitBtn.querySelector(".btn-text").textContent = "Memprediksi...";
-    submitBtn.querySelector(".btn-loader").classList.remove("hidden");
-    submitBtn.querySelector(".btn-icon").classList.add("hidden");
-
-    // Collect form data
     const formData = {
-      kelembaban_jam3: parseFloat(
-        document.getElementById("kelembaban_jam3").value,
+      kelembaban_jam3: parseFloat(elements.inputs.kelembaban_jam3.value),
+      sinar_matahari: parseFloat(elements.inputs.sinar_matahari.value),
+      kecepatan_angin: parseFloat(elements.inputs.kecepatan_angin.value),
+      tutupan_awan: parseFloat(elements.inputs.tutupan_awan.value),
+      curah_hujan: parseFloat(elements.inputs.curah_hujan.value),
+      // Advanced optional
+      suhu_min: parseFloat(document.getElementById("suhu_min")?.value || 0),
+      suhu_max: parseFloat(document.getElementById("suhu_max")?.value || 0),
+      kelembaban_jam9: parseFloat(
+        document.getElementById("kelembaban_jam9")?.value || 0,
       ),
-      sinar_matahari: parseFloat(
-        document.getElementById("sinar_matahari").value,
-      ),
-      kecepatan_angin: parseFloat(
-        document.getElementById("kecepatan_angin").value,
-      ),
-      tutupan_awan: parseFloat(document.getElementById("tutupan_awan").value),
-      curah_hujan: parseFloat(document.getElementById("curah_hujan").value),
+      hujan_hari_ini:
+        document.getElementById("hujan_hari_ini")?.checked || false,
     };
-
-    // Add advanced fields if visible
-    if (!advancedFields.classList.contains("hidden")) {
-      formData.suhu_min = parseFloat(document.getElementById("suhu_min").value);
-      formData.suhu_max = parseFloat(document.getElementById("suhu_max").value);
-      formData.kelembaban_jam9 = parseFloat(
-        document.getElementById("kelembaban_jam9").value,
-      );
-      formData.hujan_hari_ini =
-        document.getElementById("hujan_hari_ini").checked;
-    }
 
     try {
       const response = await fetch("/predict", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        showResult(result);
+        displayResult(result);
       } else {
-        showError(result.error || "Terjadi kesalahan saat prediksi.");
+        alert("Error: " + result.error);
       }
-    } catch (error) {
-      console.error("Error:", error);
-      showError(
-        "Tidak dapat terhubung ke server. Pastikan server Flask berjalan.",
-      );
+    } catch (err) {
+      console.error(err);
+      alert("Connection failed.");
     } finally {
-      // Reset button state
-      submitBtn.classList.remove("loading");
-      submitBtn.querySelector(".btn-text").textContent = "Prediksi Sekarang";
-      submitBtn.querySelector(".btn-loader").classList.add("hidden");
-      submitBtn.querySelector(".btn-icon").classList.remove("hidden");
+      setLoading(false);
     }
   });
 
-  // Show Result
-  function showResult(result) {
-    const isRain = result.prediction === 1;
+  // Reset
+  elements.resetBtn.addEventListener("click", () => {
+    elements.resultSection.classList.add("hidden");
+    elements.form.classList.remove("opacity-50", "pointer-events-none");
+    // Reset bar width for animation next time
+    elements.probBar.style.width = "0%";
+  });
 
-    // Update icon
-    document.getElementById("result-icon").textContent = isRain ? "🌧️" : "☀️";
+  // === Helper Functions ===
 
-    // Update title
-    document.getElementById("result-title").textContent = "Hasil Prediksi";
+  function setLoading(isLoading) {
+    if (isLoading) {
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+    } else {
+      elements.submitBtn.disabled = false;
+      elements.submitBtn.innerHTML = `
+                <span>Run Prediction</span>
+                <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            `;
+    }
+  }
 
-    // Update value with animation
-    const resultValue = document.getElementById("result-value");
-    resultValue.textContent = result.result;
-    resultValue.className = "result-value " + (isRain ? "rain" : "no-rain");
+  function displayResult(data) {
+    const isRain = data.prediction === 1;
+    const probability = data.probability_rain;
 
-    // Update probability
-    document.getElementById("probability-value").textContent =
-      result.probability_rain + "%";
+    elements.resultText.textContent = isRain
+      ? "Rain Predicted 🌧️"
+      : "No Rain Expectation ☀️";
+    elements.resultText.className = isRain
+      ? "text-3xl font-bold text-blue-400 tracking-tight"
+      : "text-3xl font-bold text-emerald-400 tracking-tight";
 
-    // Animate probability bar
+    elements.probText.textContent = `Confidence Level: ${probability.toFixed(1)}%`;
+
+    // Show section
+    elements.resultSection.classList.remove("hidden");
+
+    // Animate Bar
     setTimeout(() => {
-      document.getElementById("probability-fill").style.width =
-        result.probability_rain + "%";
+      elements.probBar.style.width = `${probability}%`;
+      elements.probBar.className = `absolute top-0 left-0 h-full transition-all duration-1000 ease-out ${isRain ? "bg-blue-500" : "bg-emerald-500"}`;
     }, 100);
 
-    // Update input summary
-    const summaryContainer = document.getElementById("input-summary");
-    summaryContainer.innerHTML = "";
-
-    for (const [label, value] of Object.entries(result.input_summary)) {
-      const item = document.createElement("div");
-      item.className = "summary-item";
-      item.innerHTML = `
-                <span class="label">${label}</span>
-                <span class="value">${value}</span>
-            `;
-      summaryContainer.appendChild(item);
-    }
-
-    // Show result section
-    resultSection.classList.remove("hidden");
-
     // Scroll to result
-    resultSection.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    // Add rain animation if prediction is rain
-    if (isRain) {
-      createRainAnimation();
-    } else {
-      removeRainAnimation();
-    }
-  }
-
-  // Show Error
-  function showError(message) {
-    alert("❌ Error: " + message);
-  }
-
-  // Reset Button
-  resetBtn.addEventListener("click", function () {
-    resultSection.classList.add("hidden");
-    document.getElementById("probability-fill").style.width = "0%";
-    removeRainAnimation();
-
-    // Scroll back to form
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-
-  // Rain Animation
-  function createRainAnimation() {
-    // Remove existing rain
-    removeRainAnimation();
-
-    const rainContainer = document.createElement("div");
-    rainContainer.className = "rain-animation";
-    rainContainer.id = "rain-container";
-
-    // Create raindrops
-    for (let i = 0; i < 100; i++) {
-      const drop = document.createElement("div");
-      drop.className = "raindrop";
-      drop.style.left = Math.random() * 100 + "%";
-      drop.style.animationDuration = Math.random() * 0.5 + 0.5 + "s";
-      drop.style.animationDelay = Math.random() * 2 + "s";
-      rainContainer.appendChild(drop);
-    }
-
-    document.body.appendChild(rainContainer);
-
-    // Remove after 5 seconds
-    setTimeout(() => {
-      removeRainAnimation();
-    }, 5000);
-  }
-
-  function removeRainAnimation() {
-    const existing = document.getElementById("rain-container");
-    if (existing) {
-      existing.remove();
-    }
-  }
-
-  // Number input validation
-  document.querySelectorAll('input[type="number"]').forEach((input) => {
-    input.addEventListener("input", function () {
-      const min = parseFloat(this.min);
-      const max = parseFloat(this.max);
-      let value = parseFloat(this.value);
-
-      if (!isNaN(min) && value < min) {
-        this.value = min;
-      }
-      if (!isNaN(max) && value > max) {
-        this.value = max;
-      }
+    elements.resultSection.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
     });
-  });
-
-  console.log("🌧️ Prediksi Hujan Australia - Ready!");
+  }
 });

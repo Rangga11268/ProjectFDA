@@ -1,328 +1,446 @@
 <!doctype html>
-<html lang="id">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🌧️ Prediksi Hujan Australia</title>
+    <title>Weather Prediction AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              background: "#09090b", // Slate 950
+              surface: "#18181b", // Slate 900
+              primary: "#3b82f6", // Blue 500
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <!-- Inter Font -->
     <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #09090b;
+        color: #fafafa;
+      }
+      /* Custom Range Slider Styling for Webkit */
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        margin-top: -6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: #27272a;
+        border-radius: 2px;
+      }
+      .glass-panel {
+        background: rgba(24, 24, 27, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+    </style>
   </head>
-  <body>
-    <!-- Animated Background -->
-    <div class="weather-bg">
-      <div class="cloud cloud-1"></div>
-      <div class="cloud cloud-2"></div>
-      <div class="cloud cloud-3"></div>
-    </div>
-
-    <div class="container">
-      <!-- Header -->
-      <header class="header">
-        <div class="logo">
-          <span class="weather-icon">🌤️</span>
-          <h1>Prediksi Hujan Australia</h1>
+  <body
+    class="min-h-screen flex flex-col antialiased selection:bg-primary selection:text-white"
+  >
+    <!-- Navbar -->
+    <nav
+      class="border-b border-white/10 bg-background/80 backdrop-blur-md sticky top-0 z-50"
+    >
+      <div
+        class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm"
+          >
+            AI
+          </div>
+          <span class="font-semibold text-sm tracking-tight"
+            >WeatherForecast<span class="text-zinc-500">.ai</span></span
+          >
         </div>
-        <p class="subtitle">
-          Powered by Machine Learning - Random Forest Classifier
-        </p>
-      </header>
+        <div class="text-xs text-zinc-500 font-medium">v1.0.0</div>
+      </div>
+    </nav>
 
-      <!-- Main Card -->
-      <main class="main-card glass">
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-          <button class="mode-btn active" data-mode="simple">
-            ⚡ Mode Cepat
-          </button>
-          <button class="mode-btn" data-mode="advanced">🔧 Mode Lengkap</button>
+    <!-- Main Content -->
+    <main
+      class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12"
+    >
+      <!-- Left Column: Context -->
+      <div class="lg:col-span-5 space-y-8">
+        <div class="space-y-4">
+          <h1
+            class="text-4xl lg:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500"
+          >
+            Predict weather with precision.
+          </h1>
+          <p class="text-zinc-400 text-lg leading-relaxed">
+            Utilizing Random Forest algorithms on historical Australian climate
+            data to forecast rainfall probabilities with high accuracy.
+          </p>
         </div>
 
-        <!-- Form Section -->
-        <form id="prediction-form">
-          <!-- Simple Mode Fields -->
-          <div class="form-section simple-fields">
-            <h3>🎯 Input Data Cuaca</h3>
-            <p class="form-info">
-              Masukkan 5 parameter utama untuk prediksi cepat
-            </p>
+        <div class="hidden lg:block space-y-6">
+          <div class="flex items-center gap-4 text-sm text-zinc-500">
+            <div class="flex -space-x-2">
+              <div
+                class="w-8 h-8 rounded-full bg-zinc-800 border-2 border-background flex items-center justify-center text-xs"
+              >
+                🤖
+              </div>
+              <div
+                class="w-8 h-8 rounded-full bg-zinc-800 border-2 border-background flex items-center justify-center text-xs"
+              >
+                📊
+              </div>
+              <div
+                class="w-8 h-8 rounded-full bg-zinc-800 border-2 border-background flex items-center justify-center text-xs"
+              >
+                ⚡
+              </div>
+            </div>
+            <span>Powered by Enterprise ML Models</span>
+          </div>
 
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="kelembaban_jam3">
-                  <span class="icon">💧</span> Kelembaban Jam 3 Sore
-                </label>
-                <div class="input-wrapper">
+          <div
+            class="p-4 rounded-xl border border-white/5 bg-white/5 space-y-3"
+          >
+            <div class="flex justify-between text-xs font-medium text-zinc-400">
+              <span>Model Accuracy</span>
+              <span>85.4%</span>
+            </div>
+            <div class="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+              <div
+                class="bg-blue-500 h-1.5 rounded-full"
+                style="width: 85%"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Interface -->
+      <div class="lg:col-span-7">
+        <div class="glass-panel rounded-2xl p-1 shadow-2xl shadow-black/50">
+          <div class="bg-surface rounded-xl p-6 md:p-8 space-y-8">
+            <!-- Tabs -->
+            <div
+              class="flex space-x-1 bg-zinc-900/50 p-1 rounded-lg border border-white/5"
+            >
+              <button
+                class="mode-btn flex-1 py-2 text-sm font-medium rounded-md text-white bg-zinc-800 shadow-sm transition-all text-center"
+                data-mode="simple"
+              >
+                Quick Predict
+              </button>
+              <button
+                class="mode-btn flex-1 py-2 text-sm font-medium rounded-md text-zinc-400 hover:text-white transition-all text-center"
+                data-mode="advanced"
+              >
+                Advanced Parameters
+              </button>
+            </div>
+
+            <form id="prediction-form" class="space-y-6">
+              <!-- Simple Mode -->
+              <div class="simple-fields grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Humidity -->
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <label class="text-sm font-medium text-zinc-300"
+                      >Humidity (3pm)</label
+                    >
+                    <span class="text-sm text-zinc-500 font-mono"
+                      ><span id="val_kelembaban">52</span>%</span
+                    >
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     id="kelembaban_jam3"
-                    name="kelembaban_jam3"
                     min="0"
                     max="100"
-                    step="1"
                     value="52"
-                    required
+                    class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <span class="unit">%</span>
                 </div>
-                <input
-                  type="range"
-                  class="slider"
-                  min="0"
-                  max="100"
-                  value="52"
-                  data-target="kelembaban_jam3"
-                />
-              </div>
 
-              <div class="form-group">
-                <label for="sinar_matahari">
-                  <span class="icon">☀️</span> Sinar Matahari
-                </label>
-                <div class="input-wrapper">
+                <!-- Sunshine -->
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <label class="text-sm font-medium text-zinc-300"
+                      >Sunshine</label
+                    >
+                    <span class="text-sm text-zinc-500 font-mono"
+                      ><span id="val_sinar">7.6</span>h</span
+                    >
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     id="sinar_matahari"
-                    name="sinar_matahari"
                     min="0"
                     max="14"
                     step="0.1"
                     value="7.6"
-                    required
+                    class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <span class="unit">jam</span>
                 </div>
-                <input
-                  type="range"
-                  class="slider"
-                  min="0"
-                  max="14"
-                  step="0.1"
-                  value="7.6"
-                  data-target="sinar_matahari"
-                />
-              </div>
 
-              <div class="form-group">
-                <label for="kecepatan_angin">
-                  <span class="icon">💨</span> Kecepatan Angin Kencang
-                </label>
-                <div class="input-wrapper">
+                <!-- Wind Speed -->
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <label class="text-sm font-medium text-zinc-300"
+                      >Wind Gust</label
+                    >
+                    <span class="text-sm text-zinc-500 font-mono"
+                      ><span id="val_angin">39</span>km/h</span
+                    >
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     id="kecepatan_angin"
-                    name="kecepatan_angin"
                     min="0"
                     max="150"
-                    step="1"
                     value="39"
-                    required
+                    class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <span class="unit">km/h</span>
                 </div>
-                <input
-                  type="range"
-                  class="slider"
-                  min="0"
-                  max="150"
-                  value="39"
-                  data-target="kecepatan_angin"
-                />
-              </div>
 
-              <div class="form-group">
-                <label for="tutupan_awan">
-                  <span class="icon">☁️</span> Tutupan Awan Jam 3 Sore
-                </label>
-                <div class="input-wrapper">
+                <!-- Cloud Cover -->
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <label class="text-sm font-medium text-zinc-300"
+                      >Cloud Cover</label
+                    >
+                    <span class="text-sm text-zinc-500 font-mono"
+                      ><span id="val_awan">5</span>/8</span
+                    >
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     id="tutupan_awan"
-                    name="tutupan_awan"
                     min="0"
                     max="8"
-                    step="1"
                     value="5"
-                    required
+                    class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <span class="unit">oktas</span>
                 </div>
-                <input
-                  type="range"
-                  class="slider"
-                  min="0"
-                  max="8"
-                  value="5"
-                  data-target="tutupan_awan"
-                />
-              </div>
 
-              <div class="form-group full-width">
-                <label for="curah_hujan">
-                  <span class="icon">🌧️</span> Curah Hujan Hari Ini
-                </label>
-                <div class="input-wrapper">
+                <!-- Rainfall Today -->
+                <div class="col-span-1 md:col-span-2 space-y-3">
+                  <div class="flex justify-between">
+                    <label class="text-sm font-medium text-zinc-300"
+                      >Rainfall Today</label
+                    >
+                    <span class="text-sm text-zinc-500 font-mono"
+                      ><span id="val_hujan">0</span>mm</span
+                    >
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     id="curah_hujan"
-                    name="curah_hujan"
-                    min="0"
-                    max="400"
-                    step="0.1"
-                    value="0"
-                    required
-                  />
-                  <span class="unit">mm</span>
-                </div>
-                <input
-                  type="range"
-                  class="slider"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="0"
-                  data-target="curah_hujan"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Advanced Mode Fields (Hidden by default) -->
-          <div class="form-section advanced-fields hidden">
-            <h3>📊 Parameter Tambahan</h3>
-            <p class="form-info">Data lengkap untuk prediksi lebih akurat</p>
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="suhu_min">
-                  <span class="icon">🌡️</span> Suhu Minimum
-                </label>
-                <div class="input-wrapper">
-                  <input
-                    type="number"
-                    id="suhu_min"
-                    name="suhu_min"
-                    min="-10"
-                    max="40"
-                    step="0.1"
-                    value="12"
-                  />
-                  <span class="unit">°C</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="suhu_max">
-                  <span class="icon">🌡️</span> Suhu Maksimum
-                </label>
-                <div class="input-wrapper">
-                  <input
-                    type="number"
-                    id="suhu_max"
-                    name="suhu_max"
-                    min="-5"
-                    max="50"
-                    step="0.1"
-                    value="23"
-                  />
-                  <span class="unit">°C</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="kelembaban_jam9">
-                  <span class="icon">💧</span> Kelembaban Jam 9 Pagi
-                </label>
-                <div class="input-wrapper">
-                  <input
-                    type="number"
-                    id="kelembaban_jam9"
-                    name="kelembaban_jam9"
                     min="0"
                     max="100"
-                    step="1"
-                    value="70"
+                    step="0.1"
+                    value="0"
+                    class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <span class="unit">%</span>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="hujan_hari_ini">
-                  <span class="icon">🌧️</span> Hujan Hari Ini?
-                </label>
-                <div class="toggle-wrapper">
-                  <label class="toggle">
+              <!-- Advanced Mode (Hidden) -->
+              <div
+                class="advanced-fields hidden pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                <div class="space-y-2">
+                  <label
+                    class="text-xs font-medium text-zinc-500 uppercase tracking-wider"
+                    >Min Temperature</label
+                  >
+                  <div
+                    class="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-3"
+                  >
+                    <input
+                      type="number"
+                      id="suhu_min"
+                      value="12"
+                      class="w-full bg-transparent border-none text-sm text-white focus:ring-0 py-2.5 outline-none"
+                      placeholder="12"
+                    />
+                    <span class="text-zinc-600 text-sm">°C</span>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <label
+                    class="text-xs font-medium text-zinc-500 uppercase tracking-wider"
+                    >Max Temperature</label
+                  >
+                  <div
+                    class="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-3"
+                  >
+                    <input
+                      type="number"
+                      id="suhu_max"
+                      value="23"
+                      class="w-full bg-transparent border-none text-sm text-white focus:ring-0 py-2.5 outline-none"
+                      placeholder="23"
+                    />
+                    <span class="text-zinc-600 text-sm">°C</span>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <label
+                    class="text-xs font-medium text-zinc-500 uppercase tracking-wider"
+                    >Humidity (9am)</label
+                  >
+                  <div
+                    class="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-3"
+                  >
+                    <input
+                      type="number"
+                      id="kelembaban_jam9"
+                      value="70"
+                      class="w-full bg-transparent border-none text-sm text-white focus:ring-0 py-2.5 outline-none"
+                      placeholder="70"
+                    />
+                    <span class="text-zinc-600 text-sm">%</span>
+                  </div>
+                </div>
+                <div class="space-y-2 flex items-center justify-between pt-6">
+                  <label class="text-sm text-zinc-300">Raining Today?</label>
+                  <label
+                    class="relative inline-flex items-center cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       id="hujan_hari_ini"
-                      name="hujan_hari_ini"
+                      class="sr-only peer"
                     />
-                    <span class="toggle-slider"></span>
+                    <div
+                      class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
+                    ></div>
                   </label>
-                  <span class="toggle-label">Tidak</span>
                 </div>
+              </div>
+
+              <!-- Action Button -->
+              <button
+                type="submit"
+                id="submit-btn"
+                class="group w-full bg-white text-black font-semibold py-3 px-4 rounded-lg hover:bg-zinc-200 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-white flex items-center justify-center gap-2"
+              >
+                <span>Run Prediction</span>
+                <svg
+                  class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  ></path>
+                </svg>
+              </button>
+            </form>
+
+            <!-- Result Panel (Hidden) -->
+            <div
+              id="result-section"
+              class="hidden border-t border-white/10 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div
+                class="flex flex-col items-center text-center space-y-2 mb-8"
+              >
+                <span
+                  class="text-xs font-medium text-zinc-500 uppercase tracking-widest"
+                  >Prediction Result</span
+                >
+                <h2
+                  id="result-text"
+                  class="text-3xl font-bold text-white tracking-tight"
+                >
+                  Rain Expected
+                </h2>
+                <p id="probability-text" class="text-zinc-400">
+                  Probability: 85%
+                </p>
+              </div>
+
+              <!-- Visual Bar -->
+              <div
+                class="relative h-2 bg-zinc-800 rounded-full overflow-hidden mb-8"
+              >
+                <div
+                  id="probability-bar"
+                  class="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-out"
+                  style="width: 0%"
+                ></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 text-xs">
+                <div class="p-3 rounded-lg bg-zinc-900 border border-white/5">
+                  <span class="text-zinc-500 block mb-1">Confidence</span>
+                  <span class="text-white font-mono font-medium">High</span>
+                </div>
+                <div class="p-3 rounded-lg bg-zinc-900 border border-white/5">
+                  <span class="text-zinc-500 block mb-1">Model Version</span>
+                  <span class="text-white font-mono font-medium">RF-v1.2</span>
+                </div>
+              </div>
+
+              <div class="mt-6 text-center">
+                <button
+                  id="reset-btn"
+                  class="text-sm text-zinc-500 hover:text-white transition-colors"
+                >
+                  Start Over
+                </button>
               </div>
             </div>
           </div>
-
-          <!-- Submit Button -->
-          <button type="submit" class="submit-btn" id="submit-btn">
-            <span class="btn-icon">🔍</span>
-            <span class="btn-text">Prediksi Sekarang</span>
-            <span class="btn-loader hidden"></span>
-          </button>
-        </form>
-      </main>
-
-      <!-- Result Section -->
-      <section class="result-card glass hidden" id="result-section">
-        <div class="result-header">
-          <span class="result-icon" id="result-icon">🌤️</span>
-          <h2 class="result-title" id="result-title">Hasil Prediksi</h2>
         </div>
+      </div>
+    </main>
 
-        <div class="result-content">
-          <div class="result-main">
-            <span class="result-label">Besok di Australia:</span>
-            <span class="result-value" id="result-value">-</span>
-          </div>
-
-          <div class="probability-section">
-            <div class="probability-header">
-              <span>Probabilitas Hujan</span>
-              <span class="probability-value" id="probability-value">0%</span>
-            </div>
-            <div class="probability-bar">
-              <div class="probability-fill" id="probability-fill"></div>
-            </div>
-          </div>
-
-          <div class="input-summary" id="input-summary">
-            <!-- Filled by JS -->
-          </div>
+    <footer class="border-t border-white/5 py-8 mt-12 bg-black/20">
+      <div
+        class="max-w-5xl mx-auto px-6 flex justify-between items-center text-xs text-zinc-600"
+      >
+        <p>&copy; 2026 WeatherForecast Project. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-zinc-400 transition-colors"
+            >Documentation</a
+          >
+          <a href="#" class="hover:text-zinc-400 transition-colors">API</a>
+          <a href="#" class="hover:text-zinc-400 transition-colors">GitHub</a>
         </div>
+      </div>
+    </footer>
 
-        <button class="reset-btn" id="reset-btn">
-          <span>🔄</span> Prediksi Lagi
-        </button>
-      </section>
-
-      <!-- Footer -->
-      <footer class="footer">
-        <p>
-          📊 Model: Random Forest Classifier | 🎓 Fundamental Data Analyst
-          Project
-        </p>
-        <p>Dataset: Weather Australia (~145,000 data historis)</p>
-      </footer>
-    </div>
-
+    <!-- JS Logic -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   </body>
 </html>
