@@ -1,4 +1,27 @@
-/.venv
-/datapreparation.md
-/MakalahFDAbab1dan2.pdf
-# /datamodeling.md
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Large Model Files (>100MB) - Don't push to GitHub
+models/*.pkl
+models/random_forest_model.pkl
+label_encoders.pkl
+feature_columns.pkl
+
+# Large Data Files - Don't push to GitHub
+data/*.csv
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db

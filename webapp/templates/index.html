@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌧️ Prediksi Hujan Australia</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Animated Background -->
+    <div class="weather-bg">
+      <div class="cloud cloud-1"></div>
+      <div class="cloud cloud-2"></div>
+      <div class="cloud cloud-3"></div>
+    </div>
+
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <span class="weather-icon">🌤️</span>
+          <h1>Prediksi Hujan Australia</h1>
+        </div>
+        <p class="subtitle">
+          Powered by Machine Learning - Random Forest Classifier
+        </p>
+      </header>
+
+      <!-- Main Card -->
+      <main class="main-card glass">
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="simple">
+            ⚡ Mode Cepat
+          </button>
+          <button class="mode-btn" data-mode="advanced">🔧 Mode Lengkap</button>
+        </div>
+
+        <!-- Form Section -->
+        <form id="prediction-form">
+          <!-- Simple Mode Fields -->
+          <div class="form-section simple-fields">
+            <h3>🎯 Input Data Cuaca</h3>
+            <p class="form-info">
+              Masukkan 5 parameter utama untuk prediksi cepat
+            </p>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="kelembaban_jam3">
+                  <span class="icon">💧</span> Kelembaban Jam 3 Sore
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="kelembaban_jam3"
+                    name="kelembaban_jam3"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="52"
+                    required
+                  />
+                  <span class="unit">%</span>
+                </div>
+                <input
+                  type="range"
+                  class="slider"
+                  min="0"
+                  max="100"
+                  value="52"
+                  data-target="kelembaban_jam3"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="sinar_matahari">
+                  <span class="icon">☀️</span> Sinar Matahari
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="sinar_matahari"
+                    name="sinar_matahari"
+                    min="0"
+                    max="14"
+                    step="0.1"
+                    value="7.6"
+                    required
+                  />
+                  <span class="unit">jam</span>
+                </div>
+                <input
+                  type="range"
+                  class="slider"
+                  min="0"
+                  max="14"
+                  step="0.1"
+                  value="7.6"
+                  data-target="sinar_matahari"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="kecepatan_angin">
+                  <span class="icon">💨</span> Kecepatan Angin Kencang
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="kecepatan_angin"
+                    name="kecepatan_angin"
+                    min="0"
+                    max="150"
+                    step="1"
+                    value="39"
+                    required
+                  />
+                  <span class="unit">km/h</span>
+                </div>
+                <input
+                  type="range"
+                  class="slider"
+                  min="0"
+                  max="150"
+                  value="39"
+                  data-target="kecepatan_angin"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="tutupan_awan">
+                  <span class="icon">☁️</span> Tutupan Awan Jam 3 Sore
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="tutupan_awan"
+                    name="tutupan_awan"
+                    min="0"
+                    max="8"
+                    step="1"
+                    value="5"
+                    required
+                  />
+                  <span class="unit">oktas</span>
+                </div>
+                <input
+                  type="range"
+                  class="slider"
+                  min="0"
+                  max="8"
+                  value="5"
+                  data-target="tutupan_awan"
+                />
+              </div>
+
+              <div class="form-group full-width">
+                <label for="curah_hujan">
+                  <span class="icon">🌧️</span> Curah Hujan Hari Ini
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="curah_hujan"
+                    name="curah_hujan"
+                    min="0"
+                    max="400"
+                    step="0.1"
+                    value="0"
+                    required
+                  />
+                  <span class="unit">mm</span>
+                </div>
+                <input
+                  type="range"
+                  class="slider"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="0"
+                  data-target="curah_hujan"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced Mode Fields (Hidden by default) -->
+          <div class="form-section advanced-fields hidden">
+            <h3>📊 Parameter Tambahan</h3>
+            <p class="form-info">Data lengkap untuk prediksi lebih akurat</p>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="suhu_min">
+                  <span class="icon">🌡️</span> Suhu Minimum
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="suhu_min"
+                    name="suhu_min"
+                    min="-10"
+                    max="40"
+                    step="0.1"
+                    value="12"
+                  />
+                  <span class="unit">°C</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="suhu_max">
+                  <span class="icon">🌡️</span> Suhu Maksimum
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="suhu_max"
+                    name="suhu_max"
+                    min="-5"
+                    max="50"
+                    step="0.1"
+                    value="23"
+                  />
+                  <span class="unit">°C</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="kelembaban_jam9">
+                  <span class="icon">💧</span> Kelembaban Jam 9 Pagi
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="kelembaban_jam9"
+                    name="kelembaban_jam9"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="70"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="hujan_hari_ini">
+                  <span class="icon">🌧️</span> Hujan Hari Ini?
+                </label>
+                <div class="toggle-wrapper">
+                  <label class="toggle">
+                    <input
+                      type="checkbox"
+                      id="hujan_hari_ini"
+                      name="hujan_hari_ini"
+                    />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span class="toggle-label">Tidak</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="btn-icon">🔍</span>
+            <span class="btn-text">Prediksi Sekarang</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </form>
+      </main>
+
+      <!-- Result Section -->
+      <section class="result-card glass hidden" id="result-section">
+        <div class="result-header">
+          <span class="result-icon" id="result-icon">🌤️</span>
+          <h2 class="result-title" id="result-title">Hasil Prediksi</h2>
+        </div>
+
+        <div class="result-content">
+          <div class="result-main">
+            <span class="result-label">Besok di Australia:</span>
+            <span class="result-value" id="result-value">-</span>
+          </div>
+
+          <div class="probability-section">
+            <div class="probability-header">
+              <span>Probabilitas Hujan</span>
+              <span class="probability-value" id="probability-value">0%</span>
+            </div>
+            <div class="probability-bar">
+              <div class="probability-fill" id="probability-fill"></div>
+            </div>
+          </div>
+
+          <div class="input-summary" id="input-summary">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <button class="reset-btn" id="reset-btn">
+          <span>🔄</span> Prediksi Lagi
+        </button>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>
+          📊 Model: Random Forest Classifier | 🎓 Fundamental Data Analyst
+          Project
+        </p>
+        <p>Dataset: Weather Australia (~145,000 data historis)</p>
+      </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>
