@@ -1,28 +1,51 @@
-# 🌧️ Prediksi Hujan Australia
+# 🌧️ Australian Weather Prediction AI
 
-> ⚠️ **PENTING**: File model dan dataset tidak di-push ke GitHub karena ukuran besar (>100MB)
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![Flask](https://img.shields.io/badge/Framework-Flask-green.svg)
+![ML](https://img.shields.io/badge/Model-Random%20Forest-orange.svg)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)
 
----
+Web aplikasi berbasis Machine Learning untuk memprediksi kemungkinan hujan di Australia berdasarkan data cuaca historis. Dibangun dengan Python (Flask) dan antarmuka modern menggunakan Tailwind CSS.
 
-## 📥 Download Model & Data
-
-Sebelum menjalankan aplikasi, download file berikut:
-
-| File                      | Size   | Download Link                  |
-| ------------------------- | ------ | ------------------------------ |
-| `random_forest_model.pkl` | 280 MB | [Google Drive / OneDrive Link] |
-| `label_encoders.pkl`      | 3 KB   | [Link]                         |
-| `feature_columns.pkl`     | 355 B  | [Link]                         |
-| `weatherAUS.csv`          | 17 MB  | [Link]                         |
-
-**Letakkan file di folder:**
-
-- Model files → `models/`
-- Dataset → `data/`
+![Dashboard Preview](https://github.com/user-attachments/assets/placeholder-image.png)
 
 ---
 
-## 🚀 Quick Start
+## 👥 Tim Fundamental Data Analyst
+
+Proyek ini disusun sebagai Tugas Akhir Mata Kuliah **Fundamental Data Analyst** (Semester 3).
+
+| No  | Nama Anggota         | &nbsp; |
+| --- | -------------------- | ------ |
+| 1.  | **Darell Rangga**    | 👨‍💻     |
+| 2.  | **Rifa Dini**        | 👩‍💻     |
+| 3.  | **Syifa Aulia**      | 👩‍💻     |
+| 4.  | **Megi Refkiansyah** | 👨‍💻     |
+| 5.  | **Wahyu Rizky**      | 👨‍💻     |
+
+---
+
+## 🚀 Fitur Utama
+
+- **🤖 High Accuracy Model**: Menggunakan Random Forest Classifier dengan akurasi ~85%.
+- **✨ Modern UI**: Antarmuka bersih & gelap (Dark Mode) ala Vercel/Linear dengan Tailwind CSS.
+- **⚡ Real-time Prediction**: Hasil prediksi instan dengan kalkulasi probabilitas.
+- **📱 Responsive**: Teks dan layout menyesuaikan berbagai ukuran layar.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend**: Python, Flask
+- **Machine Learning**: Scikit-Learn (Random Forest)
+- **Data Processing**: Pandas, NumPy, SMOTE (Imbalanced Data Handling)
+- **Frontend**: HTML5, Tailwind CSS, JavaScript (Vanilla)
+
+---
+
+## 📥 Cara Instalasi
+
+Karena file model berukuran besar (>100MB), Anda perlu mengunduhnya secara manual sebelum menjalankan aplikasi.
 
 ### 1. Clone Repository
 
@@ -31,86 +54,66 @@ git clone https://github.com/Rangga11268/ProjectFDA.git
 cd ProjectFDA
 ```
 
-### 2. Download Model & Data
+### 2. Setup Data & Model
 
-Download file dari link di atas, lalu:
+Download file berikut [Link Google Drive/OneDrive Anda] dan letakkan sesuai struktur folder:
 
-```bash
-# Buat folder jika belum ada
-mkdir -p models data
-
-# Pindahkan file ke folder yang sesuai
-# (Download manual dari link Google Drive/OneDrive)
+```
+ProjectFDA/
+├── models/
+│   ├── random_forest_model.pkl  <-- (280 MB) DOWNLOAD INI
+│   ├── label_encoders.pkl
+│   └── feature_columns.pkl
+├── data/
+│   └── weatherAUS.csv
 ```
 
 ### 3. Install Dependencies
 
 ```bash
+pip install -r requirements.txt
+# Atau manual:
 pip install flask pandas numpy scikit-learn joblib
 ```
 
-### 4. Jalankan Web App
+### 4. Jalankan Aplikasi
 
 ```bash
 cd webapp
 python app.py
 ```
 
-Buka browser: **http://localhost:5000**
+Buka browser di: `http://localhost:5000`
 
 ---
 
-## 📁 Struktur Proyek
+## 📊 Workflow Proyek (CRISP-DM)
 
-```
+Proyek ini mengikuti metodologi CRISP-DM:
+
+1.  **Business Understanding**: Memahami faktor cuaca yang mempengaruhi hujan.
+2.  **Data Understanding**: Eksplorasi dataset WeatherAUS (145k baris).
+3.  **Data Preparation**: Cleaning, Feature Engineering (Date splitting), Encoding.
+4.  **Modeling**: Training Random Forest dengan SMOTE balancing.
+5.  **Evaluation**: Confusion matrix, Accuracy score testing.
+6.  **Deployment**: Web App Flask.
+
+---
+
+## 📁 Struktur Folder
+
+```bash
 Project/
-├── data/                           # ⚠️ NOT in Git (download manually)
-│   ├── weatherAUS.csv
-│   ├── X_train_smote.csv
-│   └── X_test.csv
-│
-├── models/                         # ⚠️ NOT in Git (download manually)
-│   ├── random_forest_model.pkl
-│   ├── label_encoders.pkl
-│   └── feature_columns.pkl
-│
-├── notebooks/                      # ✅ In Git
-│   └── ProjectFDAWeatherAUS.ipynb
-│
-├── webapp/                         # ✅ In Git
-│   ├── app.py
-│   ├── templates/index.html
-│   └── static/
-│
-└── README.md
+├── data/               # Dataset (Not in Git)
+├── models/             # ML Models (Not in Git)
+├── notebooks/          # Jupyter Notebooks Analisis
+├── webapp/             # Source Code Web App
+│   ├── static/         # CSS & JS
+│   ├── templates/      # HTML Files
+│   └── app.py          # Main Backend
+└── README.md           # Dokumentasi
 ```
 
 ---
 
-## 🤖 Model Info
-
-- **Algorithm**: Random Forest Classifier
-- **Accuracy**: ~85%
-- **Dataset**: Weather Australia (145k records)
-- **Features**: 24 fitur (suhu, kelembaban, angin, dll)
-
----
-
-## ✨ Features
-
-- ⚡ Mode Cepat (5 parameter)
-- 🔧 Mode Lengkap (semua parameter)
-- 🎨 Glassmorphism UI
-- 📱 Mobile Responsive
-- 🌧️ Rain Animation
-
----
-
-## 📝 Credits
-
-**Fundamental Data Analyst** - Semester 3  
-GitHub: [@Rangga11268](https://github.com/Rangga11268)
-
----
-
-> 💡 **Note**: Model file disimpan di Google Drive karena ukuran >100MB (GitHub limit)
+© 2026 Fundamental Data Analyst Team. Created with ❤️ and Python.
