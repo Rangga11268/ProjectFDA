@@ -86,6 +86,11 @@ def index():
             locs = sorted(historical_data['Lokasi'].unique().tolist())
     return render_template('index.html', locations=locs)
 
+@app.route('/docs')
+def docs():
+    """Halaman dokumentasi"""
+    return render_template('docs.html')
+
 
 @app.route('/api/locations')
 def get_locations():
