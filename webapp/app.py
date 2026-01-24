@@ -57,10 +57,31 @@ LOCATIONS = [
 ]
 
 
+# Load Dataset untuk Historical Backtest (Lazy loading atau sample)
+# Kita ambil sample 1000 data terbaru yang ada RainTomorrow-nya untuk backtest
+print("🔄 Memuat data historical...")
+try:
+    cols_needed = list(DEFAULT_VALUES.keys()) + ['RainTomorrow', 'Date', 'Location']
+    # Mapping nama kolom dataset asli ke nama fitur kita (ini mungkin perlu penyesuaian tergantung isi csv asli)
+    # Asumsi weatherAUS.csv kolomnya bahasa inggris standar
+    historical_data = pd.read_csv(os.path.join(BASE_DIR, 'data', 'weatherAUS.csv'))
+    historical_data['Date'] = pd.to_datetime(historical_data['Date'])
+    historical_data.dropna(subset=['RainTomorrow'], inplace=True)
+    # Ambil sample acak 5000 baris untuk optimasi RAM
+    historical_data = historical_data.sample(n=5000, random_state=42).sort_values('Date', ascending=False)
+    print(f"✅ Historical data dimuat: {len(historical_data)} records")
+except Exception as e:
+    print(f"⚠️ Gagal memuat data historical: {e}")
+    historical_data = None
+
 @app.route('/')
 def index():
     """Halaman utama"""
-    return render_template('index.html', locations=LOCATIONS)
+    # Ambil list lokasi unik dari historical data jika ada
+    locs = LOCATIONS
+    if historical_data is not None:
+        locs = sorted(historical_data['Location'].unique().tolist())
+    return render_template('index.html', locations=locs)
 
 
 @app.route('/api/locations')
@@ -68,6 +89,38 @@ def get_locations():
     """API: Daftar lokasi"""
     return jsonify(LOCATIONS)
 
+def generate_explanation(input_data, probability):
+    """Simple Rule-based Explainability"""
+    reasons = []
+    
+    # Aturan Heuristik sederhana berdasarkan EDA
+    if input_data['KelembabanJam3'] > 70:
+        reasons.append("Kelembaban sore sangat tinggi (>70%)")
+    elif input_data['KelembabanJam3'] < 30:
+        reasons.append("Udara sangat kering, menghambat pembentukan hujan") # Negative factor
+        
+    if input_data['AwanJam3'] >= 7:
+        reasons.append("Langit mendung tebal (Tutupan Awan tinggi)")
+        
+    if input_data['SinarMatahari'] < 5:
+        reasons.append("Minim sinar matahari (< 5 jam)")
+        
+    if input_data['CurahHujan'] > 5:
+        reasons.append(f"Intensitas hujan hari ini cukup tinggi ({input_data['CurahHujan']}mm)")
+        
+    if input_data['KecepatanAnginKencang'] > 50:
+        reasons.append("Terdeteksi angin kencang berpotensi badai")
+        
+    if input_data['TekananUdaraJam3'] < 1010:
+        reasons.append("Tekanan udara rendah (Sistem Low Pressure)")
+
+    # Fallback reason
+    if not reasons and probability > 50:
+        reasons.append("Kombinasi faktor suhu dan kelembaban mendukung hujan")
+    elif not reasons and probability <= 50:
+        reasons.append("Kondisi cuaca relatif stabil dan cerah")
+        
+    return reasons
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -113,21 +166,20 @@ def predict():
         # Prediksi
         prediction = model.predict(input_df)[0]
         probability = model.predict_proba(input_df)[0]
+        prob_rain = round(probability[1] * 100, 2)
+
+        # Generate Explanation
+        explanations = generate_explanation(input_data, prob_rain)
         
         # Hasil
         result = {
             'success': True,
             'prediction': int(prediction),
             'result': 'AKAN HUJAN' if prediction == 1 else 'TIDAK HUJAN',
-            'probability_rain': round(probability[1] * 100, 2),
+            'probability_rain': prob_rain,
             'probability_no_rain': round(probability[0] * 100, 2),
-            'input_summary': {
-                'Kelembaban Jam 3': f"{input_data['KelembabanJam3']}%",
-                'Sinar Matahari': f"{input_data['SinarMatahari']} jam",
-                'Kecepatan Angin': f"{input_data['KecepatanAnginKencang']} km/h",
-                'Tutupan Awan': f"{input_data['AwanJam3']} oktas",
-                'Curah Hujan': f"{input_data['CurahHujan']} mm"
-            }
+            'explanations': explanations, # [NEW] Why?
+            'input_data': input_data      # [NEW] Return clean data for chart
         }
         
         return jsonify(result)
@@ -138,6 +190,81 @@ def predict():
             'error': str(e)
         }), 400
 
+@app.route('/api/historical/search', methods=['POST'])
+def search_historical():
+    """API: Cari data historical untuk backtest"""
+    if historical_data is None:
+        return jsonify({'success': False, 'error': 'Database historical tidak tersedia'})
+    
+    try:
+        req = request.get_json()
+        location = req.get('location')
+        
+        # Filter by location
+        matches = historical_data[historical_data['Location'] == location].head(20) # Ambil 20 transasksi terakhir di lokasi itu
+        
+        results = []
+        for _, row in matches.iterrows():
+            results.append({
+                'date': row['Date'].strftime('%Y-%m-%d'),
+                'rain_tomorrow': row['RainTomorrow'],
+                'data': {
+                    'KelembabanJam3': row.get('Humidity3pm', 50),
+                    'SinarMatahari': row.get('Sunshine', 7),
+                    'KecepatanAnginKencang': row.get('WindGustSpeed', 40),
+                    'AwanJam3': row.get('Cloud3pm', 5),
+                    'CurahHujan': row.get('Rainfall', 0),
+                    # Tambahan untuk display enak
+                    'SuhuMax': row.get('MaxTemp', 25) 
+                }
+            })
+            
+        return jsonify({'success': True, 'results': results})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/historical/test', methods=['POST'])
+def test_historical():
+    """API: Test model vs kenyataan pada tanggal tertentu"""
+    try:
+        req = request.get_json()
+        # Data ini dikirim dari frontend hasil search
+        # Kita format ulang agar sesuai input model
+        
+        raw_data = req.get('data')
+        # Buat dataframe input
+        input_data = DEFAULT_VALUES.copy()
+        
+        # Mapping kolom inggris (raw csv) ke indo (model feature)
+        # Jika front end kirim data mentah Inggris, kita map disini
+        # Tapi biar gampang, kita map di frontend atau endpoint search saja
+        # Disini asumsi 'data' sudah memiliki key yang sesuai dengan model input (karena kita set di search_historical)
+        
+        input_data.update(raw_data)
+        
+        ordered_data = {col: input_data.get(col, 0) for col in feature_columns}
+        input_df = pd.DataFrame([ordered_data])
+        
+        prediction = model.predict(input_df)[0]
+        probability = model.predict_proba(input_df)[0]
+        
+        actual = req.get('actual') # 'Yes' or 'No' from RainTomorrow column
+        actual_bool = 1 if actual == 'Yes' else 0
+        
+        is_correct = (prediction == actual_bool)
+        
+        return jsonify({
+            'success': True,
+            'prediction': int(prediction),
+            'probability': round(probability[1] * 100, 1),
+            'actual': actual,
+            'is_correct': is_correct,
+            'explanations': generate_explanation(input_data, probability[1]*100)
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/defaults')
 def get_defaults():
