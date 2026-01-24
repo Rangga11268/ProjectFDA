@@ -58,17 +58,19 @@ LOCATIONS = [
 
 
 # Load Dataset untuk Historical Backtest (Lazy loading atau sample)
-# Kita ambil sample 1000 data terbaru yang ada RainTomorrow-nya untuk backtest
+# Kita ambil sample 1000 data terbaru yang ada HujanBesok-nya untuk backtest
 print("🔄 Memuat data historical...")
 try:
-    cols_needed = list(DEFAULT_VALUES.keys()) + ['RainTomorrow', 'Date', 'Location']
-    # Mapping nama kolom dataset asli ke nama fitur kita (ini mungkin perlu penyesuaian tergantung isi csv asli)
-    # Asumsi weatherAUS.csv kolomnya bahasa inggris standar
+    # Mapping nama kolom dataset asli ke nama fitur kita
+    # Dataset weatherAUS.csv sudah ditranslate ke Indonesia
     historical_data = pd.read_csv(os.path.join(BASE_DIR, 'data', 'weatherAUS.csv'))
-    historical_data['Date'] = pd.to_datetime(historical_data['Date'])
-    historical_data.dropna(subset=['RainTomorrow'], inplace=True)
+    
+    # Pastikan format tanggal benar
+    historical_data['Tanggal'] = pd.to_datetime(historical_data['Tanggal'])
+    historical_data.dropna(subset=['HujanBesok'], inplace=True)
+    
     # Ambil sample acak 5000 baris untuk optimasi RAM
-    historical_data = historical_data.sample(n=5000, random_state=42).sort_values('Date', ascending=False)
+    historical_data = historical_data.sample(n=5000, random_state=42).sort_values('Tanggal', ascending=False)
     print(f"✅ Historical data dimuat: {len(historical_data)} records")
 except Exception as e:
     print(f"⚠️ Gagal memuat data historical: {e}")
@@ -80,7 +82,8 @@ def index():
     # Ambil list lokasi unik dari historical data jika ada
     locs = LOCATIONS
     if historical_data is not None:
-        locs = sorted(historical_data['Location'].unique().tolist())
+        if 'Lokasi' in historical_data.columns:
+            locs = sorted(historical_data['Lokasi'].unique().tolist())
     return render_template('index.html', locations=locs)
 
 
@@ -200,22 +203,22 @@ def search_historical():
         req = request.get_json()
         location = req.get('location')
         
-        # Filter by location
-        matches = historical_data[historical_data['Location'] == location].head(20) # Ambil 20 transasksi terakhir di lokasi itu
+        # Filter by location (Gunakan nama kolom bahasa Indonesia 'Lokasi')
+        matches = historical_data[historical_data['Lokasi'] == location].head(20)
         
         results = []
         for _, row in matches.iterrows():
             results.append({
-                'date': row['Date'].strftime('%Y-%m-%d'),
-                'rain_tomorrow': row['RainTomorrow'],
+                'date': row['Tanggal'].strftime('%Y-%m-%d'),
+                'rain_tomorrow': row['HujanBesok'], # Yes/No
                 'data': {
-                    'KelembabanJam3': row.get('Humidity3pm', 50),
-                    'SinarMatahari': row.get('Sunshine', 7),
-                    'KecepatanAnginKencang': row.get('WindGustSpeed', 40),
-                    'AwanJam3': row.get('Cloud3pm', 5),
-                    'CurahHujan': row.get('Rainfall', 0),
+                    'KelembabanJam3': row.get('KelembabanJam3', 50),
+                    'SinarMatahari': row.get('SinarMatahari', 7),
+                    'KecepatanAnginKencang': row.get('KecepatanAnginKencang', 40),
+                    'AwanJam3': row.get('AwanJam3', 5),
+                    'CurahHujan': row.get('CurahHujan', 0),
                     # Tambahan untuk display enak
-                    'SuhuMax': row.get('MaxTemp', 25) 
+                    'SuhuMax': row.get('SuhuMax', 25) 
                 }
             })
             
@@ -236,11 +239,6 @@ def test_historical():
         # Buat dataframe input
         input_data = DEFAULT_VALUES.copy()
         
-        # Mapping kolom inggris (raw csv) ke indo (model feature)
-        # Jika front end kirim data mentah Inggris, kita map disini
-        # Tapi biar gampang, kita map di frontend atau endpoint search saja
-        # Disini asumsi 'data' sudah memiliki key yang sesuai dengan model input (karena kita set di search_historical)
-        
         input_data.update(raw_data)
         
         ordered_data = {col: input_data.get(col, 0) for col in feature_columns}
@@ -249,7 +247,7 @@ def test_historical():
         prediction = model.predict(input_df)[0]
         probability = model.predict_proba(input_df)[0]
         
-        actual = req.get('actual') # 'Yes' or 'No' from RainTomorrow column
+        actual = req.get('actual') # 'Yes' or 'No' from HujanBesok column
         actual_bool = 1 if actual == 'Yes' else 0
         
         is_correct = (prediction == actual_bool)
