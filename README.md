@@ -7,7 +7,13 @@
 
 Web aplikasi berbasis Machine Learning untuk memprediksi kemungkinan hujan di Australia berdasarkan data cuaca historis. Dibangun dengan Python (Flask) dan antarmuka modern menggunakan Tailwind CSS.
 
-![Dashboard Preview](https://github.com/user-attachments/assets/placeholder-image.png)
+## 📸 Preview Aplikasi
+
+| Dashboard Utama                         | Analisis Prediksi                    |
+| --------------------------------------- | ------------------------------------ |
+| ![Dashboard](<img/githubImg%20(1).png>) | ![Result](<img/githubImg%20(2).png>) |
+
+![Feature](<img/githubImg%20(3).png>)
 
 ---
 

@@ -237,14 +237,18 @@ def test_historical():
     """API: Test model vs kenyataan pada tanggal tertentu"""
     try:
         req = request.get_json()
-        # Data ini dikirim dari frontend hasil search
-        # Kita format ulang agar sesuai input model
+        print(f"DEBUG TEST: Received data: {req}") # DEBUG
         
         raw_data = req.get('data')
-        # Buat dataframe input
         input_data = DEFAULT_VALUES.copy()
         
-        input_data.update(raw_data)
+        # Pastikan konversi tipe data aman
+        for k, v in raw_data.items():
+            if k in input_data:
+                try:
+                    input_data[k] = float(v)
+                except:
+                    pass # Keep default if fail
         
         ordered_data = {col: input_data.get(col, 0) for col in feature_columns}
         input_df = pd.DataFrame([ordered_data])
@@ -252,10 +256,11 @@ def test_historical():
         prediction = model.predict(input_df)[0]
         probability = model.predict_proba(input_df)[0]
         
-        actual = req.get('actual') # 'Yes' or 'No' from HujanBesok column
-        actual_bool = 1 if actual == 'Yes' else 0
+        actual = req.get('actual')
+        print(f"DEBUG TEST: Prediction={prediction}, Actual={actual}") # DEBUG
         
-        is_correct = (prediction == actual_bool)
+        actual_bool = 1 if str(actual).strip().lower() == 'yes' else 0
+        is_correct = (int(prediction) == int(actual_bool))
         
         return jsonify({
             'success': True,
@@ -267,6 +272,7 @@ def test_historical():
         })
 
     except Exception as e:
+        print(f"DEBUG ERROR: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/defaults')
