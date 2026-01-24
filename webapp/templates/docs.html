@@ -29,15 +29,21 @@
     <style>
       body {
         font-family: "Inter", sans-serif;
-        background-color: #09090b;
+        background-color: #030712;
         color: #fafafa;
+        background-image: radial-gradient(
+          circle at 50% 0%,
+          rgba(59, 130, 246, 0.1) 0%,
+          transparent 50%
+        );
+        background-attachment: fixed;
       }
     </style>
   </head>
-  <body class="min-h-screen flex flex-col antialiased">
+  <body class="min-h-screen flex flex-col antialiased selection:bg-blue-500/30">
     <!-- Navbar -->
     <nav
-      class="border-b border-white/10 bg-background/80 backdrop-blur-md sticky top-0 z-50"
+      class="border-b border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 z-50"
     >
       <div
         class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between"
