@@ -1,8 +1,3 @@
-"""
-🌧️ Web Prediksi Hujan Australia
-Flask Backend untuk model Random Forest
-"""
-
 from flask import Flask, render_template, request, jsonify
 import joblib
 import pandas as pd
